@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>คำนวณวันครบการให้ยา</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body class="bg-light">
+
+<div class="container my-4" id="printArea">
+  <div class="card shadow">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0">เว็บแอปคำนวณวันครบการให้ยา</h4>
+      <small>สำหรับบุคลากรทางการแพทย์</small>
+    </div>
+    <div class="card-body">
+
+      <div class="mb-3">
+        <label class="form-label">วันและเวลาเริ่มให้ยา</label>
+        <input type="datetime-local" id="startDate" class="form-control">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">รูปแบบการคำนวณ</label><br>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="mode" value="day" checked>
+          <label class="form-check-label">ตามจำนวนวัน</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="mode" value="dose">
+          <label class="form-check-label">ตามจำนวนครั้ง</label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">จำนวนวัน / จำนวนครั้ง</label>
+          <input type="number" id="count" class="form-control" min="1" value="7">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">ความถี่ (ชั่วโมง)</label>
+          <input type="number" id="interval" class="form-control" min="1" value="24">
+          <div class="form-text">ใช้เฉพาะกรณีคำนวณตามจำนวนครั้ง</div>
+        </div>
+      </div>
+
+      <button class="btn btn-success w-100" onclick="calculate()">คำนวณ</button>
+
+      <hr>
+
+      <div id="result" class="alert alert-info d-none"></div>
+
+    </div>
+  </div>
+</div>
+
+<div class="container text-center mb-5">
+  <button class="btn btn-outline-danger" onclick="exportPDF()">พิมพ์ / Export PDF</button>
+</div>
+
+<script>
+function calculate() {
+  const start = new Date(document.getElementById('startDate').value);
+  const count = parseInt(document.getElementById('count').value);
+  const interval = parseInt(document.getElementById('interval').value);
+  const mode = document.querySelector('input[name="mode"]:checked').value;
+
+  if (!start || isNaN(start)) {
+    alert('กรุณาเลือกวันเวลาเริ่มต้น');
+    return;
+  }
+
+  let end;
+
+  if (mode === 'day') {
+    end = new Date(start);
+    end.setDate(end.getDate() + count - 1);
+  } else {
+    end = new Date(start.getTime() + (count - 1) * interval * 60 * 60 * 1000);
+  }
+
+  const result = document.getElementById('result');
+  result.classList.remove('d-none');
+  result.innerHTML = `
+    <strong>วันและเวลาที่ให้ยาครั้งสุดท้าย</strong><br>
+    ${end.toLocaleString('th-TH')}
+  `;
+}
+
+function exportPDF() {
+  const element = document.getElementById('printArea');
+  html2pdf().from(element).set({
+    margin: 10,
+    filename: 'สรุปวันครบการให้ยา.pdf',
+    html2canvas: { scale: 2 },
+    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+  }).save();
+}
+</script>
+
+</body>
+</html>
