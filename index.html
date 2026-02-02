@@ -10,8 +10,6 @@
     .section-title{font-weight:bold;margin-top:1rem}
     .days label{margin-right:10px}
     table th,table td{text-align:center}
-
-    /* === เพิ่มเฉพาะสีคอลัมน์จำนวนเม็ดยา === */
     .pill-highlight{background:#fff3cd !important;font-weight:bold;color:#856404}
   </style>
 </head>
@@ -19,7 +17,6 @@
 
 <div class="container my-4">
 
-<!-- ===================== ส่วนที่ 1 ===================== -->
 <div class="card shadow mb-4" id="printArea1">
   <div class="card-header bg-primary text-white">
     <h5 class="mb-0">1) คำนวณวันครบการให้ยา</h5>
@@ -53,64 +50,9 @@
     <button class="btn btn-success w-100 mt-3" onclick="calcEndDate()">คำนวณ</button>
     <div id="result1" class="alert alert-info mt-3 d-none"></div>
 
-    <!-- ปรับให้พิมพ์เฉพาะส่วนที่กำลังใช้งาน -->
-    <button class="btn btn-outline-danger w-100 mt-2" onclick="exportCurrent(this,'สรุปวันครบการให้ยา.pdf')">พิมพ์ / Export PDF</button>
-
-  </div>
-</div>
-
-<!-- ===================== ส่วนที่ 2 ===================== -->
-<div class="card shadow" id="printArea2">
-  <div class="card-header bg-success text-white">
-    <h5 class="mb-0">2) คำนวณจำนวนวัน และจำนวนยา</h5>
-  </div>
-  <div class="card-body">
-
-    <label class="form-label">วันที่เริ่มต้น</label>
-    <input type="date" id="startPicker" class="form-control mb-2">
-
-    <label class="form-label">วันที่สิ้นสุด</label>
-    <input type="date" id="endPicker" class="form-control mb-2">
-
-    <label class="form-label">จำนวนเม็ดต่อสัปดาห์</label>
-    <input type="number" id="pillsPerWeek" class="form-control mb-2" placeholder="กรอกจำนวนเม็ดต่อสัปดาห์">
-
-    <label class="form-label">วันหยุดยา</label><br>
-    <div class="days mb-2">
-      <label><input type="checkbox" value="0"> อาทิตย์</label>
-      <label><input type="checkbox" value="1"> จันทร์</label>
-      <label><input type="checkbox" value="2"> อังคาร</label>
-      <label><input type="checkbox" value="3"> พุธ</label>
-      <label><input type="checkbox" value="4"> พฤหัสบดี</label>
-      <label><input type="checkbox" value="5"> ศุกร์</label>
-      <label><input type="checkbox" value="6"> เสาร์</label>
-    </div>
-
-    <button class="btn btn-success w-100 mt-3" onclick="calcPills()">คำนวณ</button>
-
-    <table class="table table-bordered mt-3 d-none" id="resultTable">
-      <thead class="table-primary">
-        <tr>
-          <th>จำนวนวัน</th>
-          <th>จำนวนสัปดาห์</th>
-          <th>วันที่กินยา</th>
-          <th>เม็ด/วัน</th>
-          <th class="pill-highlight">จำนวนเม็ดยา</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td id="daysCell"></td>
-          <td id="weeksCell"></td>
-          <td id="takeDaysCell"></td>
-          <td id="pillsPerDayCell"></td>
-          <td id="totalPillsCell" class="pill-highlight"></td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- ปรับให้พิมพ์เฉพาะส่วนที่กำลังใช้งาน -->
-    <button class="btn btn-outline-danger w-100 mt-3" onclick="exportCurrent(this,'สรุปจำนวนยา.pdf')">พิมพ์ / Export PDF</button>
+    <button class="btn btn-outline-danger w-100 mt-2" onclick="exportCurrent(this,'สรุปวันครบการให้ยา.pdf')">
+      พิมพ์ / Export PDF
+    </button>
 
   </div>
 </div>
@@ -118,49 +60,31 @@
 </div>
 
 <script>
-// ===== ส่วนที่ 1 =====
 function calcEndDate(){
-  const start=new Date(startDate.value);
-  const count=+countInput.value;
-  const interval=+intervalInput.value;
-  const mode=document.querySelector('input[name="mode"]:checked').value;
-  if(isNaN(start))return;
+  const start = new Date(startDate.value);
+  const count = +countInput.value;
+  const interval = +intervalInput.value;
+  const mode = document.querySelector('input[name="mode"]:checked').value;
+  if(isNaN(start) || count <= 0 || interval <= 0) return;
+
   let end;
-  if(mode==='day'){end=new Date(start);end.setDate(end.getDate()+count-1);} 
-  else{end=new Date(start.getTime()+(count-1)*interval*3600000);} 
-  result1.classList.remove('d-none');
-  result1.innerHTML=`<strong>วันและเวลาที่ให้ยาครั้งสุดท้าย</strong><br>${end.toLocaleString('th-TH')}`;
-}
-const countInput=document.getElementById('count');
-const intervalInput=document.getElementById('interval');
 
-// ===== ส่วนที่ 2 =====
-function getSkipDays(){return Array.from(document.querySelectorAll('.days input:checked')).map(c=>+c.value);} 
-function calcPills(){
-  if(!pillsPerWeek.value)return;
-  const s=new Date(startPicker.value);
-  const e=new Date(endPicker.value);
-  if(isNaN(s)||isNaN(e)||e<s)return;
-  let total=0,take=0;
-  const skip=getSkipDays();
-  for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)){
-    total++; if(!skip.includes(d.getDay()))take++;
+  if(mode === 'day'){
+    const dosesPerDay = 24 / interval;
+    const totalDose = count * dosesPerDay;
+    end = new Date(start.getTime() + (totalDose - 1) * interval * 3600000);
+  }else{
+    end = new Date(start.getTime() + (count - 1) * interval * 3600000);
   }
-  const ppd=pillsPerWeek.value/(7-skip.length);
-  daysCell.innerText=total;
-  weeksCell.innerText=(total/7).toFixed(2);
-  takeDaysCell.innerText=take;
-  pillsPerDayCell.innerText=ppd.toFixed(2);
-  totalPillsCell.innerText=Math.ceil(take*ppd);
-  resultTable.classList.remove('d-none');
+
+  result1.classList.remove('d-none');
+  result1.innerHTML =
+    `<strong>วันและเวลาที่ให้ยาครั้งสุดท้าย</strong><br>${end.toLocaleString('th-TH')}`;
 }
 
-const today=new Date().toISOString().split('T')[0];
-startPicker.value=today; endPicker.value=today;
-[startPicker,endPicker,pillsPerWeek].forEach(e=>e.onchange=calcPills);
-document.querySelectorAll('.days input').forEach(c=>c.onchange=calcPills);
+const countInput = document.getElementById('count');
+const intervalInput = document.getElementById('interval');
 
-// ===== export PDF เฉพาะ card ปัจจุบัน =====
 function exportCurrent(btn,filename){
   const card = btn.closest('.card');
   html2pdf().from(card).set({
